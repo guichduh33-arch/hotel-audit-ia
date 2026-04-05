@@ -522,7 +522,6 @@ function showResult(){
     ${opps.length?`<div class="result-card"><div class="result-card-header">Opportunités IA identifiées (${opps.length})</div><div class="result-card-body"><ul class="opp-list">${opps.map((o,i)=>`<li><div class="opp-icon">${i+1}</div><span>${o}</span></li>`).join('')}</ul></div></div>`:''}
     ${FD.impact_max?`<div class="result-card"><div class="result-card-header">Priorité déclarée</div><div class="result-card-body" style="font-size:13px;line-height:1.65">${FD.impact_max}</div></div>`:''}
     ${FD.gain_temps?`<div class="result-card"><div class="result-card-header">Objectif libération du gérant</div><div class="result-card-body" style="font-size:13px;line-height:1.65">${FD.gain_temps}</div></div>`:''}
-    <div class="alert-info"><strong>Étape suivante :</strong> Utilisez les boutons ci-dessous pour copier vos réponses ou les télécharger, puis envoyez-les à <strong>claude.ai</strong> pour recevoir un plan de transformation IA avec recommandations et ROI estimé.</div>
   `;
   document.getElementById('actionBar').innerHTML=`
     <button class="btn btn-primary" style="background:#25D366;border-color:#25D366;gap:8px;display:flex;align-items:center;justify-content:center" onclick="sendWhatsApp()">
