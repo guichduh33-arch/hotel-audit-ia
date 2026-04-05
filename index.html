@@ -566,7 +566,6 @@ function buildText(){
     scale_scale_transform:'Ouverture transformation',contraintes:'Contraintes',commentaires:'Commentaires'
   };
   Object.entries(labels).forEach(([k,l])=>{if(FD[k])lines.push(`${l}: ${FD[k]}`);});
-  lines.push('','═══════════════════════════════════════','INSTRUCTION POUR CLAUDE:','Analyse ce diagnostic hôtelier et génère:','1. Analyse de la charge du gérant et plan de décharge via IA (quick wins sur 30 jours)','2. Les 5 risques opérationnels prioritaires avec impact financier estimé','3. Les 5 modules IA à déployer en priorité avec justification','4. Un plan de déploiement en 3 phases (Quick wins / Consolidation / Optimisation)','5. Outils recommandés (PMS, channel manager, revenue management IA, automatisation)');
   return lines.join('\n');
 }
 function sendWhatsApp(){
