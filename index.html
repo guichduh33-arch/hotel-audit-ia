@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Opérationnel Hôtelier — Diagnostic IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --dark:#0F2D1E;--green:#1D6B45;--green-light:#2D9E67;--green-pale:#E5F4EC;
+  --gold:#C9954C;--white:#FAFFF8;--grey:#6B7B73;--border:#D4E6DC;
+  --text:#1A2E22;--text-muted:#5A7068;--danger:#B83232;--blue-pale:#EBF4FB;
+  --radius:10px;--shadow:0 2px 12px rgba(15,45,30,.08);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);line-height:1.6;min-height:100vh}
+
+/* ── NAV ── */
+.topbar{position:sticky;top:0;z-index:100;background:var(--dark);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:56px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.topbar-brand{font-family:'Cormorant Garamond',serif;font-size:18px;color:#fff;font-style:italic;letter-spacing:.02em}
+.topbar-meta{font-size:12px;color:rgba(255,255,255,.5)}
+.progress-bar{height:3px;background:var(--green-light);transition:width .4s ease;position:absolute;bottom:0;left:0}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,var(--dark) 0%,#1A4A2E 100%);padding:3.5rem 2rem 3rem;text-align:center}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:1.25rem}
+.hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(28px,5vw,44px);font-weight:400;color:#fff;font-style:italic;margin-bottom:.75rem;line-height:1.2}
+.hero p{font-size:14px;color:rgba(255,255,255,.65);max-width:560px;margin:0 auto}
+
+/* ── LAYOUT ── */
+.container{max-width:760px;margin:0 auto;padding:0 1.5rem 5rem}
+
+/* ── SECTIONS ── */
+.section{display:none;animation:fadeIn .3s ease}
+.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.section-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;margin-top:1.75rem;box-shadow:var(--shadow)}
+.section-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)}
+.sec-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:var(--green-pale)}
+.sec-num{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--green);text-transform:uppercase;margin-bottom:2px}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);font-style:italic}
+.sec-desc{font-size:13px;color:var(--text-muted);margin-top:2px}
+
+/* ── SUB SECTION ── */
+.sub-section{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--green);margin:1.5rem 0 .75rem;padding-bottom:5px;border-bottom:1px solid var(--green-pale)}
+
+/* ── QUESTION BLOCKS ── */
+.q-block{margin-bottom:1.25rem}
+.q-label{font-size:14px;font-weight:500;color:var(--text);display:block;margin-bottom:6px;line-height:1.45}
+.q-label .req{color:var(--gold);margin-left:3px}
+.q-hint{font-size:12px;color:var(--text-muted);margin-bottom:8px;font-style:italic;padding-left:10px;border-left:2px solid var(--border)}
+
+/* ── INPUTS ── */
+input[type=text],select,textarea{
+  width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;
+  font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);
+  background:#fff;transition:border-color .2s,box-shadow .2s;appearance:none;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(29,107,69,.1)}
+textarea{min-height:80px;resize:vertical}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%235A7068' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer}
+
+/* ── RADIO / CHECK ── */
+.radio-grid{display:flex;flex-direction:column;gap:8px}
+.radio-item{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;background:#fff;user-select:none}
+.radio-item:hover{border-color:var(--green);background:var(--green-pale)}
+.radio-item.selected{border-color:var(--green);background:var(--green-pale);box-shadow:0 0 0 1px var(--green)}
+.radio-item input[type=radio]{width:16px;height:16px;margin-top:3px;flex-shrink:0;accent-color:var(--green)}
+.r-text{font-size:13px;color:var(--text);line-height:1.4}
+.r-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+
+.tag-wrap{display:flex;flex-wrap:wrap;gap:8px}
+.tag{display:inline-flex;align-items:center;padding:7px 14px;border:1px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer;background:#fff;color:var(--text);transition:all .15s;user-select:none}
+.tag:hover{border-color:var(--green)}
+.tag.sel{background:var(--green-pale);border-color:var(--green);color:var(--dark);font-weight:500}
+
+/* ── SCALE ── */
+.scale-wrap{display:flex;gap:6px;margin-top:4px}
+.scale-btn{flex:1;height:42px;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;cursor:pointer;background:#fff;color:var(--text);transition:all .15s}
+.scale-btn:hover{border-color:var(--green)}
+.scale-btn.sel{background:var(--green);border-color:var(--green);color:#fff}
+.scale-labels{display:flex;justify-content:space-between;margin-top:6px}
+.scale-lbl{font-size:11px;color:var(--text-muted)}
+
+/* ── NAV BUTTONS ── */
+.nav-bar{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border)}
+.btn{padding:10px 22px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:#fff;color:var(--text)}
+.btn:hover{background:#f4f4f4}
+.btn-primary{background:var(--green);border-color:var(--green);color:#fff}
+.btn-primary:hover{background:var(--green-light)}
+.btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.step-info{font-size:13px;color:var(--text-muted)}
+
+/* ── STEP DOTS ── */
+.step-dots{display:flex;justify-content:center;gap:6px;margin-top:1.5rem}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .3s;cursor:pointer}
+.dot.done{background:var(--green-light)}
+.dot.active{background:var(--green);width:22px;border-radius:4px}
+
+/* ── RESULT ── */
+.result-hero{text-align:center;padding:2.5rem 1rem 1.5rem}
+.result-hero h2{font-family:'Cormorant Garamond',serif;font-size:32px;font-style:italic;color:var(--dark);margin-bottom:.5rem}
+.result-hero p{font-size:14px;color:var(--text-muted)}
+.check-circle{width:64px;height:64px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:28px}
+
+.flags-wrap{display:flex;flex-wrap:wrap;gap:8px;margin:1rem 0}
+.flag{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:500}
+.flag-risk{background:#FDECEA;color:#B83232;border:1px solid #F5C0C0}
+.flag-warn{background:#FFF3CD;color:#8B5E00;border:1px solid #F5D87A}
+.flag-ok{background:var(--green-pale);color:var(--green);border:1px solid #A8D9BC}
+
+.result-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1rem;box-shadow:var(--shadow)}
+.result-card-header{background:var(--green-pale);padding:.75rem 1.25rem;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--green)}
+.result-card-body{padding:1rem 1.25rem}
+.result-row{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--green-pale);font-size:13px;gap:12px}
+.result-row:last-child{border-bottom:none}
+.rk{color:var(--text-muted);flex-shrink:0;min-width:160px}
+.rv{color:var(--text);font-weight:500;text-align:right;word-break:break-word}
+
+.action-bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:1.5rem}
+.action-bar .btn{flex:1;min-width:160px;justify-content:center;display:flex;align-items:center;gap:6px}
+
+.alert-info{background:var(--blue-pale);border:1px solid #B8D4ED;border-radius:8px;padding:12px 16px;font-size:13px;color:#1A4A6E;margin-top:1rem;line-height:1.6}
+
+.opp-list{list-style:none;margin-top:.5rem}
+.opp-list li{padding:7px 0;border-bottom:1px solid var(--green-pale);font-size:13px;color:var(--text);display:flex;gap:8px}
+.opp-list li:last-child{border-bottom:none}
+.opp-icon{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;margin-top:1px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .hero{padding:2rem 1rem 1.75rem}
+  .section-card{padding:1.25rem}
+  .grid2{grid-template-columns:1fr}
+  .scale-wrap{gap:4px}
+  .scale-btn{font-size:13px}
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.grid2{grid-template-columns:1fr}}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:2rem;max-width:520px;width:100%;max-height:80vh;overflow-y:auto}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;margin-bottom:.75rem}
+.modal pre{background:#f8f8f8;border:1px solid var(--border);border-radius:8px;padding:1rem;font-size:12px;white-space:pre-wrap;word-break:break-word;max-height:300px;overflow-y:auto;font-family:monospace;line-height:1.6}
+.modal-actions{display:flex;gap:10px;margin-top:1.25rem}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-brand">Audit Hôtelier — Diagnostic IA</span>
+  <span class="topbar-meta" id="topMeta">Section 1 / 8</span>
+  <div class="progress-bar" id="progressBar" style="width:12.5%"></div>
+</div>
+
+<div class="hero">
+  <div class="hero-badge">🏨 Hôtellerie &nbsp;·&nbsp; Diagnostic IA</div>
+  <h1>Audit Opérationnel Hôtelier</h1>
+  <p>Évaluation complète de votre infrastructure de gestion pour identifier les leviers d'optimisation par l'intelligence artificielle.</p>
+  <div class="step-dots" id="stepDots"></div>
+</div>
+
+<div class="container">
+
+<!-- ═══ SECTION 1 ═══ -->
+<div class="section active" id="sec0">
+  <div class="section-card">
+    <div class="section-header">
+      <div class="sec-icon">🏨</div>
+      <div><div class="sec-num">Section 1 / 8</div><div class="sec-title">Profil de l'établissement</div><div class="sec-desc">Informations générales et positionnement de votre hôtel</div></div>
+    </div>
+    <div class="q-block">
+      <label class="q-label">Nom de l'hôtel <span class="req">★</span></label>
+      <input type="text" id="nom_hotel" placeholder="Ex. The Palm Boutique Hotel">
+    </div>
+    <div class="grid2">
+      <div class="q-block">
+        <label class="q-label">Nombre de chambres <span class="req">★</span></label>
+        <select id="nb_chambres"><option value="">— Sélectionner —</option><option>1–10 chambres</option><option>11–25 chambres</option><option>26–50 chambres</option><option>51–100 chambres</option><option>100+ chambres</option></select>
+      </div>
+      <div class="q-block">
+        <label class="q-label">Classement</label>
+        <select id="classement"><option value="">— Sélectionner —</option><option>Économique / Budget</option><option>Milieu de gamme (3★)</option><option>Supérieur (4★)</option><option>Luxe (5★)</option><option>Boutique / Lifestyle</option><option>Villa / Resort</option><option>Glamping / Eco-lodge</option></select>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="q-block">
+        <label class="q-label">Taux d'occupation moyen annuel</label>
+        <select id="taux_occ"><option value="">— Sélectionner —</option><option>Moins de 30%</option><option>30–50%</option><option>51–70%</option><option>71–85%</option><option>Plus de 85%</option></select>
+      </div>
+      <div class="q-block">
+        <label class="q-label">Durée de séjour moyenne</label>
+        <select id="duree_sejour"><option value="">— Sélectionner —</option><option>1 nuit</option><option>2–3 nuits</option><option>4–7 nuits</option><option>Plus d'une semaine</option><option>Mix variable</option></select>
+      </div>
+    </div>
+    <div class="q-block">
+      <label class="q-label">Services proposés <span style="font-weight:400;color:var(--text-muted)">(sélectionnez tout ce qui s'applique)</span></label>
+      <div class="tag-wrap" data-group="services">
+        <span class="tag" data-val="Restaurant">Restaurant sur place</span>
+        <span class="tag" data-val="Bar/Lounge">Bar / Lounge</span>
+        <span class="tag" data-val="Room service">Room service</span>
+        <span class="tag" data-val="Petit-déjeuner inclus">Petit-déjeuner inclus</span>
+        <span class="tag" data-val="Piscine">Piscine</span>
+        <span class="tag" data-val="Spa">Spa / Bien-être</span>
+        <span class="tag" data-val="Salles réunion">Salles de réunion</span>
+        <span class="tag" data-val="Transport">Transport / Navette</span>
+        <span class="tag" data-val="Activités">Activités / Excursions</span>
+        <span class="tag" data-val="Blanchisserie">Blanchisserie</span>
+      </div>
+    </div>
+    <div class="q-block">
+      <label class="q-label">Profil principal de clientèle</label>
+      <div class="tag-wrap" data-group="clientele">
+        <span class="tag" data-val="Touristes loisirs">Touristes loisirs</span>
+        <span class="tag" data-val="Groupes organisés">Groupes organisés</span>
+        <span class="tag" data-val="Voyageurs affaires">Voyageurs d'affaires</span>
+        <span class="tag" data-val="Familles">Familles</span>
+        <span class="tag" data-val="Couples">Couples / Lune de miel</span>
+        <span class="tag" data-val="Long séjour">Long séjour / Expats</span>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="q-block"><label class="q-label">Nombre de collaborateurs</label><select id="effectif"><option value="">— Sélectionner —</option><option>1–5</option><option>6–15</option><option>16–30</option><option>31–60</option><option>60+</option></select></div>
+      <div class="q-block"><label class="q-label">Poste de l'interlocuteur</label><input type="text" id="contact_role" placeholder="Ex. Directeur Général"></div>
+    </div>
+  </div>
+  <div class="nav-bar"><button class="btn" style="visibility:hidden">←</button><span class="step-info" id="si0">1 / 8</span><button class="btn btn-primary" onclick="goNext()">Suivant →</button></div>
+</div>
+
+<!-- ═══ SECTION 2 ═══ -->
+<div class="section" id="sec1">
+  <div class="section-card">
+    <div class="section-header">
+      <div class="sec-icon">📅</div>
+      <div><div class="sec-num">Section 2 / 8</div><div class="sec-title">Réservations & Distribution</div><div class="sec-desc">Canaux de vente, disponibilités et communication pré-séjour</div></div>
+    </div>
+    <div class="sub-section">Canaux de réservation</div>
+    <div class="q-block">
+      <label class="q-label">Canaux utilisés <span style="font-weight:400;color:var(--text-muted)">(tout ce qui s'applique)</span></label>
+      <div class="tag-wrap" data-group="canaux">
+        <span class="tag" data-val="Booking.com">Booking.com</span>
+        <span class="tag" data-val="Airbnb">Airbnb</span>
+        <span class="tag" data-val="Expedia">Expedia / Hotels.com</span>
+        <span class="tag" data-val="Agoda">Agoda</span>
+        <span class="tag" data-val="Site web direct">Site web direct</span>
+        <span class="tag" data-val="Téléphone direct">Appel téléphonique</span>
+        <span class="tag" data-val="WhatsApp/Email">WhatsApp / Email direct</span>
+        <span class="tag" data-val="Tour operators">Tour operators / B2B</span>
+        <span class="tag" data-val="Walk-in">Walk-in</span>
+      </div>
+    </div>
+    <div class="q-block">
+      <label class="q-label">Utilisez-vous un Channel Manager ?</label>
+      <div class="radio-grid" data-name="channel_mgr">
+        <label class="radio-item"><input type="radio" name="channel_mgr" value="Oui — synchronisation automatique temps réel"><div><div class="r-text">Oui — synchronisation automatique en temps réel</div></div></label>
+        <label class="radio-item"><input type="radio" name="channel_mgr" value="Partiellement — certains canaux manuels"><div><div class="r-text">Partiellement — certains canaux mis à jour manuellement</div></div></label>
+        <label class="radio-item"><input type="radio" name="channel_mgr" value="Non — mise à jour manuelle"><div><div class="r-text">Non — mise à jour manuelle sur chaque plateforme</div><div class="r-sub">⚠ Risque élevé de surbooking</div></div></label>
+      </div>
+    </div>
+    <div class="q-block">
+      <label class="q-label">Avez-vous déjà eu des surbookings ?</label>
+      <div class="radio-grid" data-name="overbooking">
+        <label class="radio-item"><input type="radio" name="overbooking" value="Jamais"><span class="r-text">Jamais</span></label>
+        <label class="radio-item"><input type="radio" name="overbooking" value="Rarement (1–2 fois/an)"><span class="r-text">Rarement (1 à 2 fois par an)</span></label>
+        <label class="radio-item"><input type="radio" name="overbooking" value="Parfois (1/trimestre)"><span class="r-text">Parfois (1 fois par trimestre)</span></label>
+        <label class="radio-item"><input type="radio" name="overbooking" value="Régulièrement — problème récurrent"><div><div class="r-text">Régulièrement — problème récurrent</div></div></label>
+      </div>
+    </div>
+    <div class="sub-section">Gestion tarifaire</div>
+    <div class="q-block">
+      <label class="q-label">Comment définissez-vous vos tarifs ?</label>
+      <div class="radio-grid" data-name="revenue_mgmt">
+        <label class="radio-item"><input type="radio" name="revenue_mgmt" value="Revenue management dynamique"><div><div class="r-text">Revenue management dynamique</div><div class="r-sub">Prix ajustés selon la demande et la concurrence</div></div></label>
+        <label class="radio-item"><input type="radio" name="revenue_mgmt" value="Tarifs saisonniers fixes"><span class="r-text">Tarifs saisonniers fixes (haute / basse saison)</span></label>
+        <label class="radio-item"><input type="radio" name="revenue_mgmt" value="Tarif unique toute l'année"><span class="r-text">Tarif unique toute l'année</span></label>
+        <label class="radio-item"><input type="radio" name="revenue_mgmt" value="Négocié au cas par cas"><span class="r-text">Négocié au cas par cas</span></label>
+      </div>
+    </div>
+    <div class="q-block">
+      <label class="q-label">Suivi des prix concurrents</label>
+      <div class="radio-grid" data-name="compset">
+        <label class="radio-item"><input type="radio" name="compset" value="Oui — outil automatisé"><span class="r-text">Oui — via un outil de veille automatisé</span></label>
+        <label class="radio-item"><input type="radio" name="compset" value="Oui — manuellement"><span class="r-text">Oui — manuellement sur les OTAs</span></label>
+        <label class="radio-item"><input type="radio" name="compset" value="Non — pas de veille"><span class="r-text">Non — pas de veille concurrentielle</span></label>
+      </div>
+    </div>
+    <div class="sub-section">Communication pré-séjour</div>
+    <div class="q-block">
+      <label class="q-label">Messages automatiques avant l'arrivée du client ?</label>
+      <div class="radio-grid" data-name="pre_arrival">
+        <label class="radio-item"><input type="radio" name="pre_arrival" value="Oui — emails/SMS automatisés"><div><div class="r-text">Oui — emails / SMS automatisés</div><div class="r-sub">Confirmation, pré-checkin, infos d'arrivée</div></div></label>
+        <label class="radio-item"><input type="radio" name="pre_arrival" value="Oui — envoyés manuellement"><span class="r-text">Oui — mais envoyés manuellement</span></label>
+        <label class="radio-item"><input type="radio" name="pre_arrival" value="Non — uniquement confirmation OTA"><span class="r-text">Non — uniquement la confirmation OTA</span></label>
+      </div>
+    </div>
+  </div>
+  <div class="nav-bar"><button class="btn" onclick="goBack()">← Retour</button><span class="step-info">2 / 8</span><button class="btn btn-primary" onclick="goNext()">Suivant →</button></div>
+</div>
+
+<!-- ═══ SECTION 3 ═══ -->
+<div class="section" id="sec2">
+  <div class="section-card">
+    <div class="section-header">
+      <div class="sec-icon">🗂️</div>
+      <div><div class="sec-num">Section 3 / 8</div><div class="sec-title">PMS & Opérations Front Desk</div><div class="sec-desc">Logiciel de gestion, check-in/out et gestion des chambres</div></div>
+    </div>
+    <div class="q-block">
+      <label class="q-label">Utilisez-vous un PMS (Property Management System) ? <span class="req">★</span></label>
+      <div class="radio-grid" data-name="pms_yn">
+        <label class="radio-item"><input type="radio" name="pms_yn" value="Oui — PMS complet, utilisé quotidiennement"><span class="r-text">Oui — PMS complet, utilisé quotidiennement</span></label>
+        <label class="radio-item"><input type="radio" name="pms_yn" value="Oui — sous-utilisé, saisies manuelles restantes"><div><div class="r-text">Oui — mais sous-utilisé</div><div class="r-sub">Beaucoup de saisies manuelles restantes</div></div></label>
+        <label class="radio-item"><input type="radio" name="pms_yn" value="Non — gestion Excel / manuels"><div><div class="r-text">Non — gestion via Excel / tableaux manuels</div><div class="r-sub">⚠ Risque élevé d'erreurs et de pertes de données</div></div></label>
+      </div>
+    </div>
+    <div class="q-block"><label class="q-label">Nom du PMS utilisé (si applicable)</label><input type="text" id="pms_nom" placeholder="Ex. Opera, Cloudbeds, Mews, Little Hotelier, Protel…"></div>
+    <div class="q-block"><label class="q-label">Fonctions couvertes par votre PMS</label><div class="tag-wrap" data-group="pms_f"><span class="tag" data-val="Check-in/out">Check-in / Check-out</span><span class="tag" data-val="Room map">Plan de masse</span><span class="tag" data-val="Facturation">Facturation client</span><span class="tag" data-val="Extras">Gestion des extras</span><span class="tag" data-val="CRM">Historique client / CRM</span><span class="tag" data-val="Stocks F&B">Stocks F&B</span><span class="tag" data-val="Reporting">Reporting</span><span class="tag" data-val="Channel manager intégré">Channel manager intégré</span><span class="tag" data-val="Housekeeping">Module housekeeping</span></div></div>
+    <div class="q-block">
+      <label class="q-label">Durée moyenne d'un check-in</label>
+      <div class="radio-grid" data-name="checkin_time">
+        <label class="radio-item"><input type="radio" name="checkin_time" value="Moins de 5 min"><span class="r-text">Moins de 5 minutes (digital / express)</span></label>
+        <label class="radio-item"><input type="radio" name="checkin_time" value="5–10 min"><span class="r-text">5 à 10 minutes</span></label>
+        <label class="radio-item"><input type="radio" name="checkin_time" value="10–20 min"><span class="r-text">10 à 20 minutes</span></label>
+        <label class="radio-item"><input type="radio" name="checkin_time" value=">20 min"><span class="r-text">Plus de 20 minutes</span></label>
+      </div>
+    </div>
+    <div class="q-block">
+      <label class="q-label">Check-in digital disponible ?</label>
+      <div class="radio-grid" data-name="digital_checkin">
+        <label class="radio-item"><input type="radio" name="digital_checkin" value="Oui — fonctionnel"><span class="r-text">Oui — check-in en ligne fonctionnel</span></label>
+        <label class="radio-item"><input type="radio" name="digital_checkin" value="En cours"><span class="r-text">En cours de mise en place</span></label>
+        <label class="radio-item"><input type="radio" name="digital_checkin" value="Non"><span class="r-text">Non — uniquement en présentiel</span></label>
+      </div>
+    </div>
+    <div class="q-block">
+      <label class="q-label">Gestion des demandes spéciales clients</label>
+      <div class="radio-grid" data-name="special_req">
+        <label class="radio-item"><input type="radio" name="special_req" value="PMS — transmission automatique"><span class="r-text">Enregistrées dans le PMS et transmises automatiquement</span></label>
+        <label class="radio-item"><input type="radio" name="special_req" value="Manuel / verbal"><span class="r-text">Notées manuellement et communiquées verbalement</span></label>
+        <label class="radio-item"><input type="radio" name="special_req" value="Pas de processus"><span class="r-text">Pas de processus formalisé</span></label>
+      </div>
+    </div>
+  </div>
+  <div class="nav-bar"><button class="btn" onclick="goBack()">← Retour</button><span class="step-info">3 / 8</span><button class="btn btn-primary" onclick="goNext()">Suivant →</button></div>
+</div>
+
+<!-- ═══ SECTION 4 ═══ -->
+<div class="section" id="sec3">
+  <div class="section-card">
+    <div class="section-header">
+      <div class="sec-icon">🛏️</div>
+      <div><div class="sec-num">Section 4 / 8</div><div class="sec-title">Housekeeping & Maintenance</div><div class="sec-desc">Organisation du nettoyage, statut des chambres et maintenance</div></div>
+    </div>
+    <div class="sub-section">Organisation du nettoyage</div>
+    <div class="q-block"><label class="q-label">Transmission des attributions de chambres</label><div class="radio-grid" data-name="hk_dispatch"><label class="radio-item"><input type="radio" name="hk_dispatch" value="Application dédiée"><span class="r-text">Via une application dédiée (PMS ou outil HK)</span></label><label class="radio-item"><input type="radio" name="hk_dispatch" value="Liste imprimée / écrite"><span class="r-text">Liste imprimée ou écrite à la main</span></label><label class="radio-item"><input type="radio" name="hk_dispatch" value="WhatsApp / téléphone"><span class="r-text">Via WhatsApp / téléphone</span></label><label class="radio-item"><input type="radio" name="hk_dispatch" value="Verbalement sans document"><span class="r-text">Verbalement, sans document</span></label></div></div>
+    <div class="q-block"><label class="q-label">Mise à jour du statut des chambres</label><div class="radio-grid" data-name="room_status"><label class="radio-item"><input type="radio" name="room_status" value="Temps réel via app"><div><div class="r-text">Temps réel via application</div><div class="r-sub">Front desk notifié automatiquement</div></div></label><label class="radio-item"><input type="radio" name="room_status" value="HK appelle / message"><span class="r-text">L'équipe HK appelle ou envoie un message</span></label><label class="radio-item"><input type="radio" name="room_status" value="Mise à jour manuelle fin de tournée"><div><div class="r-text">Mise à jour manuelle en fin de tournée</div><div class="r-sub">⚠ Risque de retards de check-in</div></div></label></div></div>
+    <div class="q-block"><label class="q-label">Retards de chambre bloquant les check-ins</label><div class="radio-grid" data-name="hk_delay"><label class="radio-item"><input type="radio" name="hk_delay" value="Rarement"><span class="r-text">Rarement — flux bien géré</span></label><label class="radio-item"><input type="radio" name="hk_delay" value="Parfois en haute saison"><span class="r-text">Parfois en haute saison ou départs multiples</span></label><label class="radio-item"><input type="radio" name="hk_delay" value="Souvent — source de plaintes"><div><div class="r-text">Souvent — source de plaintes clients</div></div></label></div></div>
+    <div class="q-block"><label class="q-label">Fluidité de la communication HK ↔ Réception</label><div class="scale-wrap" id="scale_hk"><div class="scale-btn" data-val="1">1</div><div class="scale-btn" data-val="2">2</div><div class="scale-btn" data-val="3">3</div><div class="scale-btn" data-val="4">4</div><div class="scale-btn" data-val="5">5</div></div><div class="scale-labels"><span class="scale-lbl">1 — Très difficile</span><span class="scale-lbl">5 — Parfaitement fluide</span></div></div>
+    <div class="sub-section">Maintenance</div>
+    <div class="q-block"><label class="q-label">Suivi des pannes et interventions</label><div class="radio-grid" data-name="maintenance"><label class="radio-item"><input type="radio" name="maintenance" value="Système de tickets"><span class="r-text">Système de tickets avec suivi et clôture</span></label><label class="radio-item"><input type="radio" name="maintenance" value="WhatsApp / verbal"><span class="r-text">WhatsApp / verbal, pas de suivi structuré</span></label><label class="radio-item"><input type="radio" name="maintenance" value="Cahier papier"><span class="r-text">Cahier de maintenance papier</span></label><label class="radio-item"><input type="radio" name="maintenance" value="Aucun système"><div><div class="r-text">Aucun système de suivi</div><div class="r-sub">⚠ Pannes répétées non résolues</div></div></label></div></div>
+    <div class="q-block"><label class="q-label">Programme d'entretien préventif</label><div class="radio-grid" data-name="preventif"><label class="radio-item"><input type="radio" name="preventif" value="Oui — planifié et documenté"><span class="r-text">Oui — planifié et documenté</span></label><label class="radio-item"><input type="radio" name="preventif" value="Partiellement"><span class="r-text">Partiellement</span></label><label class="radio-item"><input type="radio" name="preventif" value="Non — curatif uniquement"><div><div class="r-text">Non — on répare quand ça tombe en panne</div><div class="r-sub">Coûts d'urgence souvent plus élevés</div></div></label></div></div>
+  </div>
+  <div class="nav-bar"><button class="btn" onclick="goBack()">← Retour</button><span class="step-info">4 / 8</span><button class="btn btn-primary" onclick="goNext()">Suivant →</button></div>
+</div>
+
+<!-- ═══ SECTION 5 ═══ -->
+<div class="section" id="sec4">
+  <div class="section-card">
+    <div class="section-header">
+      <div class="sec-icon">🍽️</div>
+      <div><div class="sec-num">Section 5 / 8</div><div class="sec-title">Restauration & F&B</div><div class="sec-desc">Restaurant, bar, stocks alimentaires et petit-déjeuner</div></div>
+    </div>
+    <div class="q-block"><label class="q-label">Système de caisse POS pour le restaurant / bar</label><div class="radio-grid" data-name="fb_pos"><label class="radio-item"><input type="radio" name="fb_pos" value="POS connecté au PMS"><div><div class="r-text">Oui — POS connecté au PMS hôtelier</div><div class="r-sub">Extras automatiquement chargés sur le folio client</div></div></label><label class="radio-item"><input type="radio" name="fb_pos" value="POS indépendant"><div><div class="r-text">Oui — POS indépendant du PMS</div><div class="r-sub">Réconciliation manuelle nécessaire</div></div></label><label class="radio-item"><input type="radio" name="fb_pos" value="Facturation manuelle"><span class="r-text">Non — facturation manuelle (tickets papier)</span></label></div></div>
+    <div class="q-block"><label class="q-label">Gestion des extras F&B sur les folios clients</label><div class="radio-grid" data-name="folio_fb"><label class="radio-item"><input type="radio" name="folio_fb" value="Automatique POS/PMS"><span class="r-text">Automatiquement via l'intégration POS/PMS</span></label><label class="radio-item"><input type="radio" name="folio_fb" value="Saisie manuelle"><div><div class="r-text">Saisie manuelle par la réception</div><div class="r-sub">⚠ Risque d'oublis et perte de revenus</div></div></label><label class="radio-item"><input type="radio" name="folio_fb" value="Payé séparément"><span class="r-text">Tout est payé séparément au F&B</span></label></div></div>
+    <div class="q-block"><label class="q-label">Gestion des stocks cuisine et bar</label><div class="radio-grid" data-name="stock_fb"><label class="radio-item"><input type="radio" name="stock_fb" value="Logiciel dédié"><span class="r-text">Logiciel de gestion des stocks F&B dédié</span></label><label class="radio-item"><input type="radio" name="stock_fb" value="Tableur manuel"><span class="r-text">Tableur mis à jour manuellement</span></label><label class="radio-item"><input type="radio" name="stock_fb" value="Visuel / feeling"><div><div class="r-text">Suivi visuel / commande au feeling</div><div class="r-sub">⚠ Risque de ruptures et sur-commandes</div></div></label></div></div>
+    <div class="q-block"><label class="q-label">Connaissance du food cost % (coût matières)</label><div class="radio-grid" data-name="food_cost"><label class="radio-item"><input type="radio" name="food_cost" value="Oui — suivi précis"><span class="r-text">Oui — suivi précis et régulier</span></label><label class="radio-item"><input type="radio" name="food_cost" value="Approximativement"><span class="r-text">Approximativement</span></label><label class="radio-item"><input type="radio" name="food_cost" value="Non — pas suivi"><div><div class="r-text">Non — pas suivi</div><div class="r-sub">Impact sur la rentabilité non mesuré</div></div></label></div></div>
+    <div class="q-block"><label class="q-label">Anticipation des couverts du petit-déjeuner</label><div class="radio-grid" data-name="pdj_prep"><label class="radio-item"><input type="radio" name="pdj_prep" value="Extrait auto du PMS"><span class="r-text">Oui — extrait automatiquement du PMS</span></label><label class="radio-item"><input type="radio" name="pdj_prep" value="Vérification manuelle"><span class="r-text">Oui — vérifié manuellement chaque soir</span></label><label class="radio-item"><input type="radio" name="pdj_prep" value="Production fixe / estimée"><div><div class="r-text">Non — production fixe ou estimée</div><div class="r-sub">Risque de gaspillage ou de manque</div></div></label></div></div>
+  </div>
+  <div class="nav-bar"><button class="btn" onclick="goBack()">← Retour</button><span class="step-info">5 / 8</span><button class="btn btn-primary" onclick="goNext()">Suivant →</button></div>
+</div>
+
+<!-- ═══ SECTION 6 ═══ -->
+<div class="section" id="sec5">
+  <div class="section-card">
+    <div class="section-header">
+      <div class="sec-icon">💰</div>
+      <div><div class="sec-num">Section 6 / 8</div><div class="sec-title">Finances & Reporting</div><div class="sec-desc">Clôtures, facturation et pilotage de la performance</div></div>
+    </div>
+    <div class="q-block"><label class="q-label">Clôture de caisse journalière</label><div class="radio-grid" data-name="cloture"><label class="radio-item"><input type="radio" name="cloture" value="Automatique PMS"><span class="r-text">Automatiquement par le PMS / système</span></label><label class="radio-item"><input type="radio" name="cloture" value="Manuel dans tableau"><span class="r-text">Manuellement dans un tableau</span></label><label class="radio-item"><input type="radio" name="cloture" value="Pas de clôture"><div><div class="r-text">Pas de clôture formalisée</div><div class="r-sub">⚠ Pertes non détectées</div></div></label></div></div>
+    <div class="q-block">
+      <label class="q-label">KPIs financiers suivis <span style="font-weight:400;color:var(--text-muted)">(tout ce qui s'applique)</span></label>
+      <div class="tag-wrap" data-group="kpi_h">
+        <span class="tag" data-val="RevPAR">RevPAR</span><span class="tag" data-val="ADR">ADR (prix moyen)</span><span class="tag" data-val="Taux occupation">Taux d'occupation</span><span class="tag" data-val="TRevPAR">TRevPAR</span><span class="tag" data-val="GOP/EBITDA">GOP / EBITDA</span><span class="tag" data-val="Coût par chambre">Coût par chambre</span><span class="tag" data-val="CA F&B">Chiffre d'affaires F&B</span><span class="tag" data-val="Commissions OTA">Commissions OTA</span><span class="tag" data-val="Aucun">Aucun KPI suivi</span>
+      </div>
+    </div>
+    <div class="q-block"><label class="q-label">Génération des factures clients</label><div class="radio-grid" data-name="facturation"><label class="radio-item"><input type="radio" name="facturation" value="Automatique PMS"><span class="r-text">Automatiquement par le PMS au check-out</span></label><label class="radio-item"><input type="radio" name="facturation" value="Logiciel de facturation"><span class="r-text">Saisie manuelle dans un logiciel de facturation</span></label><label class="radio-item"><input type="radio" name="facturation" value="Word / Excel"><div><div class="r-text">Word / Excel rempli à la main</div><div class="r-sub">⚠ Erreurs et retards fréquents</div></div></label></div></div>
+    <div class="q-block"><label class="q-label">Délai pour produire un rapport mensuel complet</label><div class="radio-grid" data-name="delai_report"><label class="radio-item"><input type="radio" name="delai_report" value="Automatique J+1"><span class="r-text">Automatique — disponible à J+1</span></label><label class="radio-item"><input type="radio" name="delai_report" value="Quelques heures"><span class="r-text">Quelques heures de travail</span></label><label class="radio-item"><input type="radio" name="delai_report" value="1 à 5 jours"><span class="r-text">1 à 5 jours</span></label><label class="radio-item"><input type="radio" name="delai_report" value="Plus d'une semaine / pas de rapport"><span class="r-text">Plus d'une semaine ou pas de rapport structuré</span></label></div></div>
+    <div class="q-block"><label class="q-label">Impayés ou litiges de facturation récurrents</label><div class="radio-grid" data-name="impayes"><label class="radio-item"><input type="radio" name="impayes" value="Rarement"><span class="r-text">Non — rarement</span></label><label class="radio-item"><input type="radio" name="impayes" value="Parfois avec agences B2B"><span class="r-text">Parfois — surtout avec les agences B2B</span></label><label class="radio-item"><input type="radio" name="impayes" value="Régulièrement"><span class="r-text">Régulièrement — processus de relance peu efficace</span></label></div></div>
+  </div>
+  <div class="nav-bar"><button class="btn" onclick="goBack()">← Retour</button><span class="step-info">6 / 8</span><button class="btn btn-primary" onclick="goNext()">Suivant →</button></div>
+</div>
+
+<!-- ═══ SECTION 7 ═══ -->
+<div class="section" id="sec6">
+  <div class="section-card">
+    <div class="section-header">
+      <div class="sec-icon">⭐</div>
+      <div><div class="sec-num">Section 7 / 8</div><div class="sec-title">RH & Expérience Client</div><div class="sec-desc">Gestion des équipes, satisfaction et e-réputation</div></div>
+    </div>
+    <div class="sub-section">Ressources humaines</div>
+    <div class="q-block"><label class="q-label">Gestion des plannings</label><div class="radio-grid" data-name="planning_rh"><label class="radio-item"><input type="radio" name="planning_rh" value="Logiciel RH"><span class="r-text">Logiciel RH avec alertes et validation</span></label><label class="radio-item"><input type="radio" name="planning_rh" value="Tableur partagé"><span class="r-text">Tableur partagé (Excel / Google Sheets)</span></label><label class="radio-item"><input type="radio" name="planning_rh" value="Planning papier"><span class="r-text">Planning papier affiché en salle de pause</span></label></div></div>
+    <div class="q-block"><label class="q-label">Système de pointage des heures travaillées</label><div class="radio-grid" data-name="pointage"><label class="radio-item"><input type="radio" name="pointage" value="Pointage digital"><span class="r-text">Oui — pointage digital (badge, application)</span></label><label class="radio-item"><input type="radio" name="pointage" value="Feuilles manuelles"><span class="r-text">Feuilles de présence signées manuellement</span></label><label class="radio-item"><input type="radio" name="pointage" value="Non — basé sur planning"><div><div class="r-text">Non — basé sur le planning prévu</div><div class="r-sub">Impossible de détecter retards et absences</div></div></label></div></div>
+    <div class="q-block"><label class="q-label">Procédures opérationnelles documentées (SOP)</label><div class="radio-grid" data-name="sop"><label class="radio-item"><input type="radio" name="sop" value="Oui — documentées"><span class="r-text">Oui — documentées et tenues à jour</span></label><label class="radio-item"><input type="radio" name="sop" value="Partiellement"><span class="r-text">Partiellement</span></label><label class="radio-item"><input type="radio" name="sop" value="Non — oral uniquement"><div><div class="r-text">Non — transmission orale uniquement</div><div class="r-sub">Risque en cas de départ ou de turnover</div></div></label></div></div>
+    <div class="sub-section">Satisfaction client & e-réputation</div>
+    <div class="q-block"><label class="q-label">Collecte des avis clients</label><div class="radio-grid" data-name="feedback"><label class="radio-item"><input type="radio" name="feedback" value="Questionnaire auto"><span class="r-text">Oui — questionnaire automatique post-séjour</span></label><label class="radio-item"><input type="radio" name="feedback" value="Informel / verbal"><span class="r-text">Oui — mais informellement (demande verbale)</span></label><label class="radio-item"><input type="radio" name="feedback" value="Non — avis OTA a posteriori"><div><div class="r-text">Non — on lit les avis OTA une fois publiés</div><div class="r-sub">Impossible d'intervenir avant publication</div></div></label></div></div>
+    <div class="q-block"><label class="q-label">Réponses aux avis en ligne</label><div class="radio-grid" data-name="rep_mgmt"><label class="radio-item"><input type="radio" name="rep_mgmt" value="Systématique"><span class="r-text">Réponse systématique et rapide à tous les avis</span></label><label class="radio-item"><input type="radio" name="rep_mgmt" value="Occasionnel — surtout négatifs"><span class="r-text">Réponse occasionnelle, surtout aux négatifs</span></label><label class="radio-item"><input type="radio" name="rep_mgmt" value="Rarement / jamais"><div><div class="r-text">Rarement ou jamais</div><div class="r-sub">⚠ Signal très négatif pour les futurs voyageurs</div></div></label></div></div>
+    <div class="grid2">
+      <div class="q-block"><label class="q-label">Note Booking.com</label><input type="text" id="note_booking" placeholder="Ex. 8.4 / 10"></div>
+      <div class="q-block"><label class="q-label">Note Google</label><input type="text" id="note_google" placeholder="Ex. 4.3 / 5"></div>
+    </div>
+    <div class="q-block"><label class="q-label">Programme de fidélisation clients</label><div class="radio-grid" data-name="fidelisation"><label class="radio-item"><input type="radio" name="fidelisation" value="Oui — structuré"><span class="r-text">Oui — programme structuré avec base de données clients</span></label><label class="radio-item"><input type="radio" name="fidelisation" value="Informel"><span class="r-text">Informel — sans système structuré</span></label><label class="radio-item"><input type="radio" name="fidelisation" value="Non — aucun"><div><div class="r-text">Non — aucune fidélisation</div><div class="r-sub">Opportunité de revenus récurrents non exploitée</div></div></label></div></div>
+  </div>
+  <div class="nav-bar"><button class="btn" onclick="goBack()">← Retour</button><span class="step-info">7 / 8</span><button class="btn btn-primary" onclick="goNext()">Suivant →</button></div>
+</div>
+
+<!-- ═══ SECTION 8 ═══ -->
+<div class="section" id="sec7">
+  <div class="section-card">
+    <div class="section-header">
+      <div class="sec-icon">🤖</div>
+      <div><div class="sec-num">Section 8 / 8</div><div class="sec-title">Vision IA & Ambitions</div><div class="sec-desc">Priorités de transformation, budget et objectifs</div></div>
+    </div>
+    <div class="q-block">
+      <label class="q-label">Vos 3 priorités absolues <span class="req">★</span> <span style="font-weight:400;color:var(--text-muted)">(3 max)</span></label>
+      <div class="tag-wrap" data-group="prio" data-max="3">
+        <span class="tag" data-val="Éliminer le surbooking">Éliminer le surbooking</span>
+        <span class="tag" data-val="Reporting financier auto">Automatiser le reporting</span>
+        <span class="tag" data-val="Revenue management IA">Optimiser les tarifs (IA)</span>
+        <span class="tag" data-val="Accélérer check-in/out">Accélérer le check-in/out</span>
+        <span class="tag" data-val="Coordination HK-réception">Améliorer HK ↔ réception</span>
+        <span class="tag" data-val="Réduire pertes F&B">Réduire pertes de revenus F&B</span>
+        <span class="tag" data-val="Booster avis en ligne">Booster les avis en ligne</span>
+        <span class="tag" data-val="Centraliser réservations">Centraliser les réservations</span>
+        <span class="tag" data-val="Gestion stocks">Améliorer gestion des stocks</span>
+        <span class="tag" data-val="Simplifier RH/planning">Simplifier la gestion RH</span>
+        <span class="tag" data-val="Fidéliser les clients">Fidéliser les clients</span>
+      </div>
+    </div>
+    <div class="q-block">
+      <label class="q-label">Le problème le plus coûteux aujourd'hui <span class="req">★</span></label>
+      <div class="q-hint">Décrivez précisément — temps perdu, erreurs récurrentes, manque à gagner estimé…</div>
+      <textarea id="impact_max" placeholder="Ex. Notre clôture de caisse prend 2h chaque soir, nous avons régulièrement des erreurs de facturation avec nos agences B2B, nos stocks de bar ne sont pas suivis et nous avons des ruptures chaque semaine…" style="min-height:110px;background:var(--blue-pale)"></textarea>
+    </div>
+    <div class="q-block"><label class="q-label">Expérience avec des outils IA</label><div class="radio-grid" data-name="ia_exp"><label class="radio-item"><input type="radio" name="ia_exp" value="Oui — régulièrement"><span class="r-text">Oui — utilisés régulièrement avec satisfaction</span></label><label class="radio-item"><input type="radio" name="ia_exp" value="Quelques essais"><span class="r-text">Quelques essais, résultats mitigés</span></label><label class="radio-item"><input type="radio" name="ia_exp" value="Non — jamais essayé"><span class="r-text">Non — jamais essayé</span></label></div></div>
+    <div class="q-block"><label class="q-label">Ouverture à la transformation</label><div class="scale-wrap" id="scale_transform"><div class="scale-btn" data-val="1">1</div><div class="scale-btn" data-val="2">2</div><div class="scale-btn" data-val="3">3</div><div class="scale-btn" data-val="4">4</div><div class="scale-btn" data-val="5">5</div></div><div class="scale-labels"><span class="scale-lbl">1 — Changements mineurs</span><span class="scale-lbl">5 — Transformation complète</span></div></div>
+    <div class="q-block"><label class="q-label">Budget envisagé pour un système IA sur mesure</label><div class="radio-grid" data-name="budget"><label class="radio-item"><input type="radio" name="budget" value="<5k USD"><span class="r-text">Moins de 5 000 USD</span></label><label class="radio-item"><input type="radio" name="budget" value="5–15k USD"><span class="r-text">5 000 – 15 000 USD</span></label><label class="radio-item"><input type="radio" name="budget" value="15–50k USD"><span class="r-text">15 000 – 50 000 USD</span></label><label class="radio-item"><input type="radio" name="budget" value=">50k USD"><span class="r-text">50 000 USD et plus</span></label><label class="radio-item"><input type="radio" name="budget" value="Selon ROI démontré"><span class="r-text">À définir selon le ROI démontré</span></label></div></div>
+    <div class="q-block"><label class="q-label">Contraintes spécifiques à prendre en compte</label><textarea id="contraintes" placeholder="Ex. Personnel peu à l'aise avec le digital, contraintes légales locales, système actuel impossible à remplacer…"></textarea></div>
+    <div class="q-block"><label class="q-label">Commentaires libres</label><textarea id="commentaires" style="min-height:90px;background:var(--blue-pale)" placeholder="Tout ce qui n'a pas été couvert dans ce formulaire — contexte, historique, attentes particulières…"></textarea></div>
+  </div>
+  <div class="nav-bar"><button class="btn" onclick="goBack()">← Retour</button><span class="step-info">8 / 8</span><button class="btn btn-primary" onclick="submitForm()" style="background:var(--dark);border-color:var(--dark);padding:10px 28px">Soumettre le diagnostic ✓</button></div>
+</div>
+
+<!-- ═══ RÉSULTAT ═══ -->
+<div class="section" id="secResult">
+  <div class="result-hero">
+    <div class="check-circle">✓</div>
+    <h2>Diagnostic complété</h2>
+    <p>Voici votre synthèse opérationnelle avec les risques et opportunités identifiés.</p>
+  </div>
+  <div id="resultContent"></div>
+  <div class="action-bar" id="actionBar"></div>
+</div>
+
+</div><!-- /container -->
+
+<!-- MODAL TEXTE -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <h3>Réponses à copier pour Claude</h3>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:.75rem">Copiez ce texte, ouvrez <strong>claude.ai</strong>, collez-le et demandez une analyse.</p>
+    <pre id="modalText"></pre>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="copyText()">📋 Copier tout</button>
+      <button class="btn" onclick="downloadTxt()">💾 Télécharger .txt</button>
+      <button class="btn" onclick="document.getElementById('modalOverlay').classList.remove('open')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOTAL = 8;
+let cur = 0;
+const FD = {};
+
+// ── DOTS ──
+const dotsEl = document.getElementById('stepDots');
+for(let i=0;i<TOTAL;i++){const d=document.createElement('div');d.className='dot'+(i===0?' active':'');d.onclick=()=>{if(i<cur)goTo(i)};dotsEl.appendChild(d);}
+function updateDots(){document.querySelectorAll('.dot').forEach((d,i)=>{d.className='dot'+(i<cur?' done':i===cur?' active':'');});}
+
+// ── PROGRESS ──
+function updateProgress(){
+  const pct = ((cur+1)/TOTAL*100).toFixed(1);
+  document.getElementById('progressBar').style.width=pct+'%';
+  document.getElementById('topMeta').textContent=`Section ${cur+1} / ${TOTAL}`;
+  updateDots();
+}
+
+// ── NAV ──
+function goTo(n){
+  document.getElementById(cur<TOTAL?'sec'+cur:'secResult').classList.remove('active');
+  cur=n;
+  if(n>=TOTAL){showResult();return;}
+  document.getElementById('sec'+n).classList.add('active');
+  updateProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function goNext(){collect();goTo(cur+1);}
+function goBack(){goTo(cur-1);}
+
+// ── COLLECT ──
+function collect(){
+  // text inputs & selects
+  document.querySelectorAll('#sec'+cur+' input[type=text],#sec'+cur+' select,#sec'+cur+' textarea').forEach(el=>{if(el.id&&el.value.trim())FD[el.id]=el.value.trim();});
+  // radios
+  document.querySelectorAll('#sec'+cur+' input[type=radio]:checked').forEach(el=>{FD[el.name]=el.value;});
+  // tags
+  document.querySelectorAll('#sec'+cur+' .tag-wrap').forEach(tw=>{
+    const grp=tw.dataset.group;
+    const sel=[...tw.querySelectorAll('.tag.sel')].map(t=>t.dataset.val);
+    if(sel.length)FD['tags_'+grp]=sel.join(', ');
+  });
+  // scales
+  document.querySelectorAll('#sec'+cur+' .scale-wrap').forEach(sw=>{
+    const sel=sw.querySelector('.scale-btn.sel');
+    if(sel)FD['scale_'+sw.id]=sel.dataset.val;
+  });
+}
+
+// ── RADIO CLICK ──
+document.addEventListener('click',e=>{
+  const ri=e.target.closest('.radio-item');
+  if(ri){
+    const inp=ri.querySelector('input[type=radio]');
+    if(inp){
+      const name=inp.name;
+      document.querySelectorAll(`input[name="${name}"]`).forEach(r=>r.closest('.radio-item').classList.remove('selected'));
+      ri.classList.add('selected');
+      inp.checked=true;
+    }
+  }
+  const tag=e.target.closest('.tag');
+  if(tag&&tag.closest('.tag-wrap')){
+    const tw=tag.closest('.tag-wrap');
+    const max=parseInt(tw.dataset.max)||99;
+    if(tag.classList.contains('sel')){tag.classList.remove('sel');return;}
+    const sel=tw.querySelectorAll('.tag.sel');
+    if(sel.length>=max)return;
+    tag.classList.add('sel');
+  }
+  const sb=e.target.closest('.scale-btn');
+  if(sb){
+    const sw=sb.closest('.scale-wrap');
+    sw.querySelectorAll('.scale-btn').forEach(b=>b.classList.remove('sel'));
+    sb.classList.add('sel');
+  }
+});
+
+// ── SUBMIT ──
+function submitForm(){collect();showResult();}
+
+function showResult(){
+  document.getElementById('secResult').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('progressBar').style.width='100%';
+  document.getElementById('topMeta').textContent='Diagnostic complété';
+
+  const risks=[];const opps=[];
+  if(FD.channel_mgr==='Non — mise à jour manuelle')risks.push({t:'Risque surbooking',l:'risk'});
+  if(FD.overbooking==='Régulièrement — problème récurrent')risks.push({t:'Surbookings récurrents',l:'risk'});
+  if(FD.pms_yn==='Non — gestion Excel / manuels')risks.push({t:'Absence de PMS',l:'risk'});
+  if(FD.room_status==='Mise à jour manuelle fin de tournée')risks.push({t:'Statut chambres en retard',l:'warn'});
+  if(FD.maintenance==='Aucun système')risks.push({t:'Maintenance non tracée',l:'warn'});
+  if(FD.folio_fb==='Saisie manuelle')risks.push({t:'Pertes revenus F&B',l:'warn'});
+  if(FD.food_cost==='Non — pas suivi')risks.push({t:'Food cost inconnu',l:'risk'});
+  if(FD.cloture==='Pas de clôture')risks.push({t:'Clôture caisse absente',l:'risk'});
+  if(FD.feedback==='Non — avis OTA a posteriori')risks.push({t:'Avis négatifs non interceptés',l:'warn'});
+  if(FD.sop==='Non — oral uniquement')risks.push({t:'Procédures non documentées',l:'warn'});
+  if(FD.fidelisation==='Non — aucun')opps.push('Programme de fidélisation CRM');
+  if(FD.revenue_mgmt==="Tarif unique toute l'année")opps.push('Revenue management dynamique IA');
+  if(FD.pre_arrival==='Non — uniquement confirmation OTA')opps.push('Communication pré-séjour automatisée');
+  if(FD.rep_mgmt==='Rarement / jamais')opps.push('Gestion e-réputation automatisée');
+  if(FD.compset==='Non — pas de veille')opps.push('Veille tarifaire concurrentielle');
+  if(FD.pointage==='Non — basé sur planning')opps.push('Pointage digital du personnel');
+
+  const rHTML=risks.length?`<div class="flags-wrap">${risks.map(r=>`<span class="flag flag-${r.l}">⚠ ${r.t}</span>`).join('')}</div>`:`<div class="flags-wrap"><span class="flag flag-ok">✓ Aucun risque critique détecté</span></div>`;
+
+  const profil=[
+    ['Hôtel',FD.nom_hotel||'—'],['Chambres',FD.nb_chambres||'—'],
+    ['Classement',FD.classement||'—'],['Taux d\'occ.',FD.taux_occ||'—'],
+    ['PMS',FD.pms_yn||'—'],['PMS nom',FD.pms_nom||'—'],
+    ['Channel manager',FD.channel_mgr||'—'],['Revenue mgmt',FD.revenue_mgmt||'—'],
+    ['Reporting',FD.delai_report||'—'],['Budget IA',FD.budget||'—'],
+  ];
+
+  const rc=document.getElementById('resultContent');
+  rc.innerHTML=`
+    ${rHTML}
+    <div class="result-card"><div class="result-card-header">Profil opérationnel</div><div class="result-card-body">${profil.map(([k,v])=>`<div class="result-row"><span class="rk">${k}</span><span class="rv">${v}</span></div>`).join('')}</div></div>
+    ${opps.length?`<div class="result-card"><div class="result-card-header">Opportunités IA identifiées (${opps.length})</div><div class="result-card-body"><ul class="opp-list">${opps.map((o,i)=>`<li><div class="opp-icon">${i+1}</div><span>${o}</span></li>`).join('')}</ul></div></div>`:''}
+    ${FD.impact_max?`<div class="result-card"><div class="result-card-header">Priorité déclarée</div><div class="result-card-body" style="font-size:13px;line-height:1.65">${FD.impact_max}</div></div>`:''}
+    <div class="alert-info"><strong>Étape suivante :</strong> Utilisez les boutons ci-dessous pour copier vos réponses ou les télécharger, puis envoyez-les à <strong>claude.ai</strong> pour recevoir un plan de transformation IA complet avec recommandations et ROI estimé.</div>
+  `;
+
+  const ab=document.getElementById('actionBar');
+  ab.innerHTML=`
+    <button class="btn btn-primary" onclick="openModal()">📋 Copier les réponses pour Claude</button>
+    <button class="btn" onclick="downloadTxt()">💾 Télécharger .txt</button>
+    <button class="btn" onclick="location.reload()">↺ Nouveau diagnostic</button>
+  `;
+}
+
+// ── TEXT EXPORT ──
+function buildText(){
+  const lines=['═══════════════════════════════════════','AUDIT OPÉRATIONNEL HÔTELIER — DIAGNOSTIC IA','═══════════════════════════════════════',''];
+  const labels={
+    nom_hotel:'Nom de l\'hôtel',nb_chambres:'Chambres',classement:'Classement',taux_occ:'Taux d\'occupation',
+    duree_sejour:'Durée de séjour',effectif:'Effectif',contact_role:'Interlocuteur',
+    tags_services:'Services',tags_clientele:'Clientèle',
+    tags_canaux:'Canaux de réservation',channel_mgr:'Channel Manager',overbooking:'Surbookings',
+    revenue_mgmt:'Gestion tarifaire',compset:'Veille concurrentielle',pre_arrival:'Communication pré-séjour',
+    pms_yn:'PMS',pms_nom:'Nom du PMS',tags_pms_f:'Fonctions PMS',checkin_time:'Durée check-in',
+    digital_checkin:'Check-in digital',special_req:'Demandes spéciales',
+    hk_dispatch:'Transmission attributions HK',room_status:'Statut chambres',hk_delay:'Retards HK',
+    scale_scale_hk:'Fluidité HK↔Réception',maintenance:'Suivi maintenance',preventif:'Entretien préventif',
+    fb_pos:'POS F&B',folio_fb:'Extras sur folio',stock_fb:'Stocks F&B',food_cost:'Food cost',pdj_prep:'Prévision PDJ',
+    cloture:'Clôture caisse',tags_kpi_h:'KPIs suivis',facturation:'Facturation',delai_report:'Délai reporting',impayes:'Impayés',
+    planning_rh:'Planning RH',pointage:'Pointage',sop:'Procédures SOP',
+    feedback:'Collecte avis',rep_mgmt:'Réponse avis',note_booking:'Note Booking.com',note_google:'Note Google',fidelisation:'Fidélisation',
+    tags_prio:'Priorités IA',impact_max:'Problème prioritaire',ia_exp:'Expérience IA',
+    scale_scale_transform:'Ouverture transformation',budget:'Budget',contraintes:'Contraintes',commentaires:'Commentaires'
+  };
+  Object.entries(labels).forEach(([k,l])=>{
+    if(FD[k])lines.push(`${l}: ${FD[k]}`);
+  });
+  lines.push('','═══════════════════════════════════════');
+  lines.push('INSTRUCTION POUR CLAUDE:');
+  lines.push('Analyse ce diagnostic hôtelier et génère:');
+  lines.push('1. Les 5 risques opérationnels prioritaires avec impact financier estimé');
+  lines.push('2. Les 5 modules IA à déployer en priorité');
+  lines.push('3. Un plan de déploiement en 3 phases (Quick wins / Consolidation / Optimisation)');
+  lines.push('4. Outils et intégrations recommandés (PMS, channel manager, revenue management IA)');
+  lines.push('5. ROI estimé sur 12 mois');
+  return lines.join('\n');
+}
+
+function openModal(){
+  document.getElementById('modalText').textContent=buildText();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(e){if(e.target===e.currentTarget)document.getElementById('modalOverlay').classList.remove('open');}
+function copyText(){
+  navigator.clipboard.writeText(buildText()).then(()=>{
+    const btn=document.querySelector('#modalOverlay .btn-primary');
+    btn.textContent='✓ Copié !';setTimeout(()=>btn.textContent='📋 Copier tout',2000);
+  });
+}
+function downloadTxt(){
+  const a=document.createElement('a');
+  a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(buildText());
+  a.download='diagnostic_hotel_IA.txt';a.click();
+}
+
+updateProgress();
+</script>
+</body>
+</html>
